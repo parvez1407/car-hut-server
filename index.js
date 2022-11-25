@@ -19,6 +19,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run() {
     try {
         const usersCollections = client.db('carHut').collection('users');
+        const categoriesCollection = client.db('carHut').collection('categories');
 
         // user collection api
         app.put('/user/:email', async (req, res) => {
@@ -30,6 +31,36 @@ async function run() {
                 $set: user,
             }
             const result = await usersCollections.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
+        // Admin api for dashboard 
+        app.get('/users/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollections.findOne(query);
+            res.send({ isAdmin: user?.role === 'admin' });
+        })
+        // Admin api for dashboard 
+        app.get('/users/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email }
+            const user = await usersCollections.findOne(query);
+            res.send({ isSeller: user?.role === 'seller' });
+        })
+        // get sellers and buyers
+        app.get('/sellers', async (req, res) => {
+            const result = await usersCollections.find({ role: 'seller' }).toArray();
+            res.send(result)
+        })
+        // get buyers and buyers
+        app.get('/buyers', async (req, res) => {
+            const result = await usersCollections.find({ role: 'buyer' }).toArray();
+            res.send(result)
+        })
+        // product categories
+        app.get('/categories', async (req, res) => {
+            const query = {};
+            const result = await categoriesCollection.find(query).toArray();
             res.send(result);
         })
 
