@@ -21,6 +21,17 @@ async function run() {
         const usersCollections = client.db('carHut').collection('users');
 
         // user collection api
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: user,
+            }
+            const result = await usersCollections.updateOne(filter, updatedDoc, options);
+            res.send(result);
+        })
 
 
     }
