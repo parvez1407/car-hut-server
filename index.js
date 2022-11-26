@@ -77,7 +77,13 @@ async function run() {
             const categoryProduct = await productsCollection.find(query).toArray();
             res.send(categoryProduct);
         });
-
+        // get specific product collection of seller
+        app.get('/myproducts/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { sellerEmail: email }
+            const result = await productsCollection.find(query).toArray();
+            res.send(result);
+        })
 
 
     }
