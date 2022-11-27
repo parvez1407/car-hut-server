@@ -22,6 +22,7 @@ async function run() {
         const categoriesCollection = client.db('carHut').collection('categories');
         const productsCollection = client.db('carHut').collection('products');
         const bookingsCollection = client.db('carHut').collection('bookings');
+        const wishlistsCollection = client.db('carHut').collection('wishlists');
 
         // user collection api
         app.put('/user/:email', async (req, res) => {
@@ -90,6 +91,27 @@ async function run() {
         app.post('/bookings', async (req, res) => {
             const booking = req.body;
             const result = await bookingsCollection.insertOne(booking);
+            res.send(result);
+        })
+
+        // get bookings data by email for specific buyer
+        app.get('/bookings/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { buyerEmail: email };
+            const result = await bookingsCollection.find(query).toArray();
+            res.send(result);
+        })
+        // post wishlist collection
+        app.post('/wishlists', async (req, res) => {
+            const wishlist = req.body;
+            const result = await wishlistsCollection.insertOne(wishlist);
+            res.send(result);
+        })
+        // get wishlist data by email for specific buyer
+        app.get('/wishlists/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { buyerEmail: email };
+            const result = await wishlistsCollection.find(query).toArray();
             res.send(result);
         })
 
