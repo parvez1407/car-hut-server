@@ -21,6 +21,7 @@ async function run() {
         const usersCollections = client.db('carHut').collection('users');
         const categoriesCollection = client.db('carHut').collection('categories');
         const productsCollection = client.db('carHut').collection('products');
+        const bookingsCollection = client.db('carHut').collection('bookings');
 
         // user collection api
         app.put('/user/:email', async (req, res) => {
@@ -82,6 +83,13 @@ async function run() {
             const email = req.params.email;
             const query = { sellerEmail: email }
             const result = await productsCollection.find(query).toArray();
+            res.send(result);
+        })
+
+        // post bookings collection
+        app.post('/bookings', async (req, res) => {
+            const booking = req.body;
+            const result = await bookingsCollection.insertOne(booking);
             res.send(result);
         })
 
