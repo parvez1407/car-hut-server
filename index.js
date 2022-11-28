@@ -101,11 +101,30 @@ async function run() {
 
         })
 
+
+
         // get sellers and buyers
         app.get('/sellers', async (req, res) => {
             const result = await usersCollections.find({ role: 'seller' }).toArray();
             res.send(result)
         })
+        // delete single seller
+        app.delete('/sellers/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await usersCollections.deleteOne(filter);
+            res.send(result);
+        })
+        // delete single buyers
+        app.delete('/buyers/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await usersCollections.deleteOne(filter);
+            res.send(result);
+        })
+
+
+
         // get buyers and buyers
         app.get('/buyers', async (req, res) => {
             const result = await usersCollections.find({ role: 'buyer' }).toArray();
@@ -123,6 +142,16 @@ async function run() {
             const result = await productsCollection.insertOne(product);
             res.send(result);
         })
+
+        // delete product by seller
+        app.delete('/products/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await productsCollection.deleteOne(filter);
+            res.send(result);
+        })
+
+
         // get products by its category
         app.get('/category/:id', async (req, res) => {
             const id = req.params.id;
@@ -174,6 +203,7 @@ async function run() {
             const result = await wishlistsCollection.find(query).toArray();
             res.send(result);
         })
+
 
 
     }
