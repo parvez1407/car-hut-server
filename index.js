@@ -25,6 +25,7 @@ async function run() {
         const bookingsCollection = client.db('carHut').collection('bookings');
         const wishlistsCollection = client.db('carHut').collection('wishlists');
         const paymentsCollection = client.db('carHut').collection('payments');
+        const promotionsCollection = client.db('carHut').collection('promotions');
 
         // user collection api
         app.put('/user/:email', async (req, res) => {
@@ -70,6 +71,8 @@ async function run() {
                 clientSecret: paymentIntent.client_secret,
             });
         })
+
+
         // payments collection
         app.post('/payments', async (req, res) => {
             const payment = req.body;
@@ -84,6 +87,7 @@ async function run() {
             }
             const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc);
             const updatedProduct = await productsCollection.updateOne({ _id: ObjectId(payment.productId) }, updatedDoc);
+            const updatedAdvertise = await promotionsCollection.updateOne({ productId: payment.productId }, updatedDoc);
             res.send(result);
         })
         // seller verification
@@ -140,6 +144,19 @@ async function run() {
         app.post('/products', async (req, res) => {
             const product = req.body;
             const result = await productsCollection.insertOne(product);
+            res.send(result);
+        })
+
+        // post advertises collection
+        app.post('/promotions', async (req, res) => {
+            const advertise = req.body;
+            const result = await promotionsCollection.insertOne(advertise);
+            res.send(result);
+        })
+        // get advertises collection
+        app.get('/promotions', async (req, res) => {
+            const query = {};
+            const result = await promotionsCollection.find(query).toArray();
             res.send(result);
         })
 
