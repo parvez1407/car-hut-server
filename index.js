@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 const port = process.env.PORT || 5000;
 
 const app = express();
@@ -23,6 +24,7 @@ async function run() {
         const productsCollection = client.db('carHut').collection('products');
         const bookingsCollection = client.db('carHut').collection('bookings');
         const wishlistsCollection = client.db('carHut').collection('wishlists');
+        const paymentsCollection = client.db('carHut').collection('payments');
 
         // user collection api
         app.put('/user/:email', async (req, res) => {
@@ -50,6 +52,55 @@ async function run() {
             const user = await usersCollections.findOne(query);
             res.send({ isSeller: user?.role === 'seller' });
         })
+
+        // stripe payment
+        app.post('/create-payment-intent', async (req, res) => {
+            const booking = req.body;
+            const price = booking.sealingPrice;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types": [
+                    "card"
+                ]
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        })
+        // payments collection
+        app.post('/payments', async (req, res) => {
+            const payment = req.body;
+            const result = await paymentsCollection.insertOne(payment);
+            const id = payment.bookingId;
+            const filter = { _id: ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc);
+            const updatedProduct = await productsCollection.updateOne({ _id: ObjectId(payment.productId) }, updatedDoc);
+            res.send(result);
+        })
+        // seller verification
+        app.post('/verification', async (req, res) => {
+            const verification = req.body;
+            const email = verification.email;
+            const filter = { sellerEmail: email };
+            const updatedDoc = {
+                $set: {
+                    verified: true,
+                }
+            }
+            const updatedProducts = await productsCollection.updateMany(filter, updatedDoc);
+            const updatedResult = await usersCollections.updateOne({ email: verification.email }, updatedDoc);
+
+        })
+
         // get sellers and buyers
         app.get('/sellers', async (req, res) => {
             const result = await usersCollections.find({ role: 'seller' }).toArray();
@@ -101,6 +152,15 @@ async function run() {
             const result = await bookingsCollection.find(query).toArray();
             res.send(result);
         })
+
+        // get bookings for payment
+        app.get('/booking/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const booking = await bookingsCollection.findOne(query);
+            res.send(booking);
+        })
+
         // post wishlist collection
         app.post('/wishlists', async (req, res) => {
             const wishlist = req.body;
